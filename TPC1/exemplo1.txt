@@ -1,0 +1,6 @@
+Este ficheiro é um exemplo.  
+Foi criado para mostrar o funcionamento do código desenvolvido.  
+Este ficheiro é um ficheiro txt.   
+Este ficheiro é um exemplo.  
+O output deverá gerar apenas 4 linhas, incluindo esta.
+
