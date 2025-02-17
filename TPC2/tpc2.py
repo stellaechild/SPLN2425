@@ -1,22 +1,26 @@
-import sys
-import re
-import subprocess
+#!/usr/bin/env python3
 
-__doc__ = '''
-NAME
-   repetidas - Remove ou comenta linhas repetidas de um arquivo de texto ou PDF
+'''
+Name 
+    repetidas - Remove ou comenta linhas repetidas de um arquivo de texto ou PDF
 
 SYNOPSIS
-   repetidas [options] input_files
-   options:
-    -s  Diferencia linhas com e sem espaços no final
-    -e  Remove linhas vazias
-    -p  Adiciona um prefixo '#' às linhas duplicadas em vez de removê-las (comenta)
-    -h  Documentação
+    repetidas [options] input_files
+    options:
+        -s  Diferencia linhas com e sem espaços no final
+        -e  Remove linhas vazias
+        -p  Adiciona um prefixo '#' às linhas duplicadas em vez de removê-las (comenta)
+        -h  Exibe a documentação
 
 DESCRIPTION
-   Remove ou comenta linhas repetidas de um arquivo de texto ou PDF, mantendo a saída no stdout.
+    Remove ou comenta linhas repetidas de um arquivo de texto ou PDF, mantendo a saída no stdout.
 '''
+
+import sys
+import os
+import re
+import subprocess
+from jjcli import clfilter
 
 def processar_texto(linha, linhas_vistas, linhas_removidas, espacos_diferenciam, prefixo):
     linha_processada = linha.rstrip() if espacos_diferenciam else re.sub(r'\s+', ' ', linha.strip())
@@ -48,34 +52,38 @@ def remover_linhas_repetidas(ficheiro, espacos_diferenciam, remover_vazias, pref
             with open(ficheiro, 'r', encoding='utf-8') as f:
                 processar_fonte(f.read())
     except Exception as e:
-        print(f"Erro ao ler o arquivo: {e}")
+        print(f"Erro ao ler o arquivo '{ficheiro}': {e}")
         sys.exit(1)
     
     print(f"\nTotal de linhas únicas: {len(linhas_vistas)}")
     print(f"Total de linhas repetidas {'comentadas' if prefixo else 'removidas'}: {linhas_removidas[0]}")
 
 def main():
-    if '-h' in sys.argv:
+    # Definindo as opções usando o jjcli
+    cl = clfilter("seh:s:e:p", doc=__doc__)  ## Passa as opções de forma simplificada
+    
+    # Verifica se o usuário solicitou ajuda
+    if cl.opt.get("-h"):
         print(__doc__)
         sys.exit(0)
 
-    if len(sys.argv) < 2:
-        print("Por favor, forneça o caminho do arquivo.")
+    # Usa cl.args para garantir que estamos pegando os argumentos corretamente
+    if len(cl.args) < 1:
+        print("Erro: Nenhum arquivo foi especificado.")
         sys.exit(1)
 
-    ficheiro = sys.argv[1]
+    ficheiro = cl.args[0]  # Agora estamos pegando o nome correto do arquivo
 
-    espacos_diferenciam = '-s' in sys.argv
-    remover_vazias = '-e' in sys.argv
-    prefixo = '-p' in sys.argv
+    # Verifica se o arquivo realmente existe
+    if not os.path.isfile(ficheiro):
+        print(f"Erro: O arquivo '{ficheiro}' não foi encontrado.")
+        sys.exit(1)
 
-    print(f"Processando o arquivo: {ficheiro}")
-    
+    espacos_diferenciam = "-s" in cl.opt
+    remover_vazias = "-e" in cl.opt
+    prefixo = "-p" in cl.opt
+
     remover_linhas_repetidas(ficheiro, espacos_diferenciam, remover_vazias, prefixo)
 
 if __name__ == '__main__':
     main()
-
-
-
-

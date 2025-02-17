@@ -6,4 +6,4 @@ UC: SPLN
 ---
 # Filtro que Elimina Linhas Repetidas num Ficheiro
 
-Modo de utilização : repetidas [option*] /testes/[ficheiro]
+Modo de utilização : python3 tpc2.py [option*] /testes/[ficheiro]
