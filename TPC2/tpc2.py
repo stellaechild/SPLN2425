@@ -1,68 +1,81 @@
 import sys
 import re
-import argparse
-#! /usr/bin/env python
-from jjcli import *
+import subprocess
 
-def processar_texto(linha, linhas_vistas, linhas_removidas, args):
-    linha_original = linha.rstrip('\n')
-    linha_limpa = re.sub(r'\s+', ' ', linha.strip())
-    linha_limpa = re.sub(r'[^\w\s]', '', linha_limpa)
-    linha_limpa = linha_limpa.lower()
+__doc__ = '''
+NAME
+   repetidas - Remove ou comenta linhas repetidas de um arquivo de texto ou PDF
 
-    print(f"Processing line: {linha_original}")  # Debug
+SYNOPSIS
+   repetidas [options] input_files
+   options:
+    -s  Diferencia linhas com e sem espaços no final
+    -e  Remove linhas vazias
+    -p  Adiciona um prefixo '#' às linhas duplicadas em vez de removê-las (comenta)
+    -h  Documentação
 
-    if args.e and not linha_limpa:
-        return  
+DESCRIPTION
+   Remove ou comenta linhas repetidas de um arquivo de texto ou PDF, mantendo a saída no stdout.
+'''
+
+def processar_texto(linha, linhas_vistas, linhas_removidas, espacos_diferenciam, prefixo):
+    linha_processada = linha.rstrip() if espacos_diferenciam else re.sub(r'\s+', ' ', linha.strip())
     
-    if linha_limpa:
-        if linha_limpa not in linhas_vistas:
-            linhas_vistas.add(linha_limpa)
-            print(linha_original)  # Print unique lines
+    if linha_processada:  
+        if linha_processada not in linhas_vistas:
+            linhas_vistas[linha_processada] = linha  
+            print(linha, end='')
         else:
-            linhas_removidas[0] += 1
-            if args.p:
-                print(f"{args.p}{linha_original}")  # Print repeated lines with prefix
-    elif not args.e:
-        print(linha_original)  # Print empty or non-cleaned lines
+            linhas_removidas[0] += 1  
+            if prefixo:
+                print(f"# {linha}", end='')
 
-def remover_linhas_repetidas(cli, args):
-    linhas_vistas = set()
-    linhas_removidas = [0]
-
-    # Try using the text() method to get the content
-    print(f"Reading lines using cli.text()...")
-
-    # Using cli.text() to get the text content from the clfilter object
-    content = cli.text()  # Get content using text method
+def remover_linhas_repetidas(ficheiro, espacos_diferenciam, remover_vazias, prefixo):
+    linhas_vistas = {}  
+    linhas_removidas = [0]  
     
-    # Now iterate over the content (if it's a string, split it into lines)
-    for linha in content.splitlines():  # Assuming content is a string, we split it by lines
-        processar_texto(linha, linhas_vistas, linhas_removidas, args)
+    def processar_fonte(texto):
+        for linha in texto.splitlines():
+            if remover_vazias and not linha.strip():
+                continue
+            processar_texto(linha, linhas_vistas, linhas_removidas, espacos_diferenciam, prefixo)
+    
+    try:
+        if ficheiro.endswith('.pdf'):
+            resultado = subprocess.run(['pdftotext', ficheiro, '-'], capture_output=True, text=True)
+            processar_fonte(resultado.stdout)
+        else:
+            with open(ficheiro, 'r', encoding='utf-8') as f:
+                processar_fonte(f.read())
+    except Exception as e:
+        print(f"Erro ao ler o arquivo: {e}")
+        sys.exit(1)
     
     print(f"\nTotal de linhas únicas: {len(linhas_vistas)}")
-    print(f"Total de linhas repetidas encontradas: {linhas_removidas[0]}")
+    print(f"Total de linhas repetidas {'comentadas' if prefixo else 'removidas'}: {linhas_removidas[0]}")
 
 def main():
-    cl = clfilter(opt="sep", man=__doc__)  # Initialize clfilter
-    parser = argparse.ArgumentParser(
-        description="Remove ou comenta linhas duplicadas de um arquivo de texto ou PDF.",
-        epilog="Exemplo de uso: python3 script.py exemplo.txt"
-    )
-    parser.add_argument("ficheiro", help="O arquivo de texto ou PDF para processar.")
-    parser.add_argument("-s", action="store_true", help="Diferencia linhas em branco de linhas com espaços.")
-    parser.add_argument("-e", action="store_true", help="Remove linhas em branco do arquivo.")
-    parser.add_argument("-p", metavar="PREFIXO", type=str, help="Adiciona um prefixo às linhas repetidas, por exemplo, '#'" )
-    
-    args = parser.parse_args()
-    
-    # Use clfilter to get a filtered iterator or file-like object
-    cli = clfilter(args.ficheiro)  # Get the clfilter object
-    
-    # Process the file with clfilter object
-    remover_linhas_repetidas(cli, args)
+    if '-h' in sys.argv:
+        print(__doc__)
+        sys.exit(0)
 
-if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Por favor, forneça o caminho do arquivo.")
+        sys.exit(1)
+
+    ficheiro = sys.argv[1]
+
+    espacos_diferenciam = '-s' in sys.argv
+    remover_vazias = '-e' in sys.argv
+    prefixo = '-p' in sys.argv
+
+    print(f"Processando o arquivo: {ficheiro}")
+    
+    remover_linhas_repetidas(ficheiro, espacos_diferenciam, remover_vazias, prefixo)
+
+if __name__ == '__main__':
     main()
+
+
 
 
