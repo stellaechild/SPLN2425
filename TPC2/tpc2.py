@@ -59,22 +59,18 @@ def remover_linhas_repetidas(ficheiro, espacos_diferenciam, remover_vazias, pref
     print(f"Total de linhas repetidas {'comentadas' if prefixo else 'removidas'}: {linhas_removidas[0]}")
 
 def main():
-    # Definindo as opções usando o jjcli
-    cl = clfilter("seh:s:e:p", doc=__doc__)  ## Passa as opções de forma simplificada
+    cl = clfilter("seh:s:e:p", doc=__doc__)  
     
-    # Verifica se o usuário solicitou ajuda
     if cl.opt.get("-h"):
         print(__doc__)
         sys.exit(0)
 
-    # Usa cl.args para garantir que estamos pegando os argumentos corretamente
     if len(cl.args) < 1:
         print("Erro: Nenhum arquivo foi especificado.")
         sys.exit(1)
 
-    ficheiro = cl.args[0]  # Agora estamos pegando o nome correto do arquivo
+    ficheiro = cl.args[0]  
 
-    # Verifica se o arquivo realmente existe
     if not os.path.isfile(ficheiro):
         print(f"Erro: O arquivo '{ficheiro}' não foi encontrado.")
         sys.exit(1)
