@@ -1,0 +1,10 @@
+[project]
+name="ftk"
+version="0.1.0"
+authors=[{name="Maria", email="pg54042@alunos.uminho.pt"}]
+description=""" """
+license={text="MIT"}
+dependencies=["jjcli"]
+
+[project.scripts]
+ftk-occ="ftk.base:main"
